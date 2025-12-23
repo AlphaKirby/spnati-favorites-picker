@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0">
+<title>SPNATI Favorites Picker</title>
+<style>
+
+body {
+    background:#5A2F23;
+    color:#000;
+    font-family:verdana, sans-serif;
+    font-size:10pt;
+    margin:0;
+    padding:10px;
+}
+
+a:link, a:visited {
+    color:#008;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+a:active, a:hover {
+    color:#ACF;
+}
+
+.info {
+    font-weight:bold;
+}
+
+button {
+    font-family:inherit;
+    cursor:pointer;
+    border:0;
+    border-radius:3px;
+    padding:0.3em 0.5em;
+    background:#CCC;
+    color:#000;
+}
+
+button:hover {
+    background:#DDD;
+}
+
+button.disabled {
+    background:#DDD;
+    color:#888;
+    cursor:not-allowed;
+}
+
+button.disabled:hover {
+    background:#DDD;
+}
+
+#container {
+    position:relative;
+    margin-left:-10px;
+    margin-right:-10px;
+    padding:10px;
+    overflow:hidden;
+    background-image: url("images/inventory.png");
+    background-size: cover;
+}
+
+@media (min-width:1024px) {
+    /* Put the found favorites beside the picking div when the window is sufficiently large */
+    #picking {
+        float:left;
+        width:636px;
+    }
+
+    #secondary {
+        margin-left:646px;
+    }
+}
+
+@media (min-width:1300px) {
+    /* Once we get to the point where 636px is less than half of the width of the screen, make the picking div just take up half */
+    #picking {
+        width:50%;
+    }
+
+    #secondary {
+        margin-left:51%;
+    }
+}
+
+#pick {
+    background:#58F;
+    color:#FFF;
+    font-size:larger;
+    font-weight:bold;
+    width:6em;
+    border-radius:5px;
+    margin-right:10px;
+}
+
+#pick.disabled {
+    background:#ACF;
+}
+
+#pick:hover {
+    background:#ACF;
+}
+
+.item-list {
+    padding:0;
+    list-style-type:none;
+    line-height:100px;
+}
+
+.item-list li {
+    margin:0;
+    display:inline-block;
+    height:100px;
+    width:100px;
+    line-height:100px;
+    border:3px solid transparent;
+    text-align:center;
+    position:relative;
+    vertical-align:top;
+    overflow:hidden;
+    border-radius:53px;
+    background:#F7F7F7;
+    color:#000;
+}
+
+.item-list li img {
+    vertical-align:middle;
+    max-height:100%;
+    max-width:100%;
+}
+
+.item-list li span {
+    display:inline-block;
+    vertical-align:middle;
+    line-height:1.2;
+}
+
+@media (max-width:636px) {
+    .item-list {
+        line-height:75px;
+    }
+
+    .item-list li {
+        line-height:75px;
+        height:75px;
+        width:75px;
+    }
+}
+
+@media (max-width:423px) {
+    .item-list {
+        line-height:50px;
+    }
+
+    .item-list li {
+        line-height:50px;
+        height:50px;
+        width:50px;
+    }
+}
+
+#evaluating li {
+    cursor:pointer;
+}
+
+#favorites li {
+    cursor:move;
+}
+
+.item-list li:hover {
+    background:#CDF;
+}
+
+.item-list.sorting li:hover {
+    background:#F7F7F7;
+}
+
+#evaluating li.selected {
+    border:3px solid #7AC;
+}
+
+#evaluating, #buttons {
+    text-align:center;
+    margin:auto;
+}
+
+#evaluating li.notice {
+    width:auto;
+    height:auto;
+    max-width:260px;
+    margin:auto;
+    background:#F7F7F7;
+    border-radius:10px;
+    padding:30px 30px;
+    color:#000;
+    text-align:center;
+    line-height:1.4;
+    cursor:auto;
+    font-size:10pt;
+}
+
+#buttons {
+    margin-top:30px;
+    position:relative;
+    z-index:3;
+}
+
+#shared-list-modal {
+    position:absolute;
+    background:#FFF;
+    margin:60px auto;
+    top:0;
+    right:0;
+    left:0;
+    width:650px;
+    max-width:95%;
+    box-sizing:border-box;
+    padding:20px 50px 50px;
+    box-shadow:1px 1px 5px #333;
+    z-index:100;
+}
+
+@media(max-width:700px) {
+    #shared-list-modal {
+        padding:20px;
+    }
+}
+
+#shared-list-modal:before {
+    content:'';
+    position:fixed;
+    background:#FFF;
+    opacity:0.5;
+    top:0;
+    right:0;
+    bottom:0;
+    left:0;
+    z-index:-1;
+}
+
+#shared-list-modal .item-list {
+    text-align:center;
+    margin:2em 0;
+}
+
+#shared-list-modal .close {
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:30px;
+    line-height:30px;
+    color:#AAA;
+    font-weight:bold;
+    text-align:center;
+    background:none;
+    padding:0;
+    font-size:larger;
+}
+
+#shared-list-modal .close:hover {
+    background:#EEE;
+}
+
+#shared-list-modal .buttons {
+    text-align:center;
+    line-height:3.5em;
+}
+
+#shared-list-modal button {
+    padding:0.9em 2em;
+    margin:0 0.2em;
+}
+
+h1 {
+    text-align:center;
+    color: white;
+}
+
+p {
+    text-align:center;
+    color: white;
+}
+
+#secondary h2 {
+    color: white;
+}
+
+#options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+#options div {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+    horiz-align: center;
+    text-align: center;
+    align-items: center;
+
+}
+
+#options div p {
+    margin: 0;
+    margin-bottom: 3px;
+}
+
+#options h2 {
+    color: white;
+
+}
+
+#options input, #options #roster-selection:not() {
+    width:40px;
+    margin-bottom: 15px;
+}
+
+#roster-selection {
+    display:flex;
+    flex-direction: row;
+    color: white;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#roster-selection
+</style>
+</head>
+<body>
+<h1>SPNATI Favorites Picker</h1>
+
+<p>This handy picker help you find out who your favorite SPNATI opponents are! Simply select your favorites between a certain selection of characters, and you'll eventually know who your favorites are, one at a time.</p>
+
+<div id="container">
+
+<div id="picking">
+<ul id="evaluating" class="item-list">
+</ul>
+
+<p id="buttons"><button id="pick">Pick</button> <button id="pass">Pass</button> <button id="undo">Undo</button> <button id="redo">Redo</button></p>
+</div>
+
+<div id="secondary">
+<h2>Found favorites</h2>
+
+<ol id="favorites" class="item-list">
+</ol>
+
+<p><a href="" id="shortcode-link">Permalink to this list</a></p>
+</div>
+</div>
+
+<div id="options">
+    <div>
+        <h1>Options</h1>
+        <p>Max Batch Size</p>
+        <input type="number" id="max-batch-size" value="15" min="2" max="20" step="1">
+            <h2>Include:</h2>
+    </div>
+    <div id="roster-selection">
+        <label><input type="checkbox" id="includeMain">Main Roster</label>
+        <label><input type="checkbox" id="includeLegacy">Legacy Roster</label>
+        <label><input type="checkbox" id="includeTesting">Testing Roster</label>
+        <label><input type="checkbox" id="includeIncomplete">Incomplete Roster</label>
+        <label><input type="checkbox" id="includeAprilFools">April Fools Roster</label>
+    </div>
+    </div>
+
+<footer>
+   <p>
+       Credits to <a href="https://github.com/antialiasis/favorite-picker">the creator of the picker</a> for the actual picker functionality, and credits to the SPNATI development team for creating all these wonderful characters.
+   </p>
+</footer>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="picker.js"></script>
+<script src="picker-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+
+<div id="shared-list-modal" style="display:none">
+<button class="close shared-list-skip">&times;</button>
+<h2>Shared list</h2>
+
+<p>Generated by this picker tool. Create your own list or continue from this one below!</p>
+
+<ol id="shared-list" class="item-list">
+</ol>
+
+<p class="buttons"><button id="shared-list-continue">Continue from this list</button> <button class="shared-list-skip">Make my own list</button></p>
+</div>
+<script>
+'use strict';
+
+var items = [
+    // Define your items here
+	 {id: '9s', name: '9S', image: 'images/9s.png', main: false, incleg: true, af: false},
+	 {id: 'aaravi', name: 'Aaravi Mishra', image: 'images/aaravi.png', main: true, incleg: false, af: false},
+	 {id: 'adora', name: 'Adora', image: 'images/adora.png', main: false, incleg: true, af: false},
+	 {id: 'adrien', name: 'Cat Noir', image: 'images/adrien.png', main: true, incleg: false, af: false},
+	 {id: 'ae86', name: 'Toyota Sprinter AE86 Trueno GT Apex (The Car from Inital D)', image: 'images/ae86.png', main: true, incleg: false, af: true},
+	 {id: 'aella', name: 'Aella', image: 'images/zzzzz-1722963352aella.png', main: true, incleg: false, af: false},
+	 {id: 'ahri', name: 'Ahri Vastaya', image: 'images/ahri.png', main: false, incleg: true, af: false},
+	 {id: 'aimee', name: 'Aimee Matchlock', image: 'images/aimee.png', main: true, incleg: true, af: false},
+	 {id: 'aiyana', name: 'Aiyana Piper', image: 'images/aiyana.png', main: false, incleg: true, af: false},
+	 {id: 'akko', name: 'Atsuko Kagari', image: 'images/akko.png', main: true, incleg: false, af: false},
+	 {id: 'alice', name: 'Alice Liddell', image: 'images/alice.png', main: false, incleg: true, af: false},
+	 {id: 'alice_degracia', name: 'Alice Degracia', image: 'images/alicedegracia.png', main: false, incleg: true, af: false},
+	 {id: 'alice_mgq', name: 'Alipheese Fateburn XVI', image: 'images/alicemgq.png', main: false, incleg: true, af: false},
+	 {id: 'aloy', name: 'Aloy of the Nora', image: 'images/aloy.png', main: true, incleg: false, af: false},
+	 {id: 'alpha', name: 'Alpha', image: 'images/alpha.png', main: true, incleg: true, af: false},
+	 {id: 'amalia', name: 'Amalia Sheran Sharm', image: 'images/amalia.png', main: true, incleg: false, af: false},
+	 {id: 'ameri', name: 'Ameri Azazel', image: 'images/zzzzz-1757271738ameri.png', main: false, incleg: false, af: false},
+	 {id: 'ami', name: 'Ami Kawashima', image: 'images/ami.png', main: true, incleg: true, af: false},
+	 {id: 'amy', name: 'Amy', image: 'images/amy.png', main: true, incleg: false, af: false},
+	 {id: 'amy_rose', name: 'Amy Rose', image: 'images/amyrose.png', main: true, incleg: false, af: false},
+	 {id: 'anatoly', name: 'Anatoly', image: 'images/anatoly.png', main: true, incleg: false, af: false},
+	 {id: 'angela_tom', name: 'Angela', image: 'images/zzzzz-1759628734angelatom.png', main: false, incleg: false, af: false},
+	 {id: 'angie', name: 'Angie', image: 'images/angie.png', main: true, incleg: true, af: false},
+	 {id: 'ann', name: 'Ann Takamaki', image: 'images/ann.png', main: true, incleg: true, af: false},
+	 {id: 'anna', name: 'Anna', image: 'images/anna.png', main: false, incleg: true, af: false},
+	 {id: 'annie', name: 'Annie Edison', image: 'images/annie.png', main: false, incleg: true, af: false},
+	 {id: 'annie_leonhart', name: 'Annie Leonhart', image: 'images/annieleonhart.png', main: false, incleg: true, af: false},
+	 {id: 'aoba', name: 'Aoba Suzukaze', image: 'images/aoba.png', main: false, incleg: false, af: false},
+	 {id: 'aoi_asahina', name: 'Aoi Asahina', image: 'images/aoiasahina.png', main: true, incleg: false, af: false},
+	 {id: 'aoi_inuyama', name: 'Aoi Inuyama', image: 'images/zzzzz-1733767101aoiinuyama.png', main: true, incleg: false, af: false},
+	 {id: 'april', name: 'April O\'Neil', image: 'images/april.png', main: false, incleg: true, af: false},
+	 {id: 'aqua_grunt', name: 'Aqua Grunt', image: 'images/aquagrunt.png', main: true, incleg: false, af: false},
+	 {id: 'aqua_kh', name: 'Aqua', image: 'images/aquakh.png', main: true, incleg: false, af: false},
+	 {id: 'aqua_konosuba', name: 'Aqua', image: 'images/aquakonosuba.png', main: true, incleg: false, af: false},
+	 {id: 'arash', name: 'Arash Kamangir', image: 'images/arash.png', main: true, incleg: false, af: false},
+	 {id: 'arle', name: 'Arle Nadja', image: 'images/zzzzz-1744899055arle.png', main: true, incleg: false, af: false},
+	 {id: 'arushalae', name: 'Arueshalae ', image: 'images/arueshalae.png', main: true, incleg: false, af: false},
+	 {id: 'arwen', name: 'Arwen Undòmiel', image: 'images/arwen.png', main: false, incleg: true, af: false},
+	 {id: 'aster', name: 'Asterisk', image: 'images/aster.png', main: false, incleg: true, af: false},
+	 {id: 'astolfo_bean_plushie', name: 'Astolfo Bean', image: 'images/astolfobeanplushie.png', main: true, incleg: false, af: true},
+	 {id: 'asuna_yuuki', name: 'Asuna Yuuki', image: 'images/asunayuuki.png', main: true, incleg: false, af: false},
+     {id: 'athena', name: 'Athena', image: 'images/athena.png', main: false, incleg: true, af: false},
+	 {id: 'ayano', name: 'Ayano Aishi', image: 'images/ayano.png', main: true, incleg: false, af: false},
+	 {id: 'azami', name: 'Azami Kurotani', image: 'images/azami.png', main: true, incleg: false, af: true},
+	 {id: 'barbara', name: 'Barbara Pegg', image: 'images/barbara.png', main: true, incleg: false, af: false},
+	 {id: 'basil', name: 'Basil', image: 'images/basil.png', main: false, incleg: true, af: false},
+	 {id: 'beatrix', name: 'Beatrix Lucavi', image: 'images/beatrix.png', main: true, incleg: false, af: false},
+	 {id: 'bella_goth', name: 'Bella Goth', image: 'images/bellagoth.png', main: true, incleg: false, af: true},
+	 {id: 'bernadetta', name: 'Bernadetta von Varley', image: 'images/bernadetta.png', main: true, incleg: false, af: false},
+	 {id: 'bi', name: 'Bi', image: 'images/bi.png', main: false, incleg: true, af: false},
+	 {id: 'binah', name: 'Binah', image: 'images/zzzzz-1736975041binah.png', main: true, incleg: false, af: false},
+	 {id: 'black_canary', name: 'Dinah Lance', image: 'images/blackcanary.png', main: true, incleg: true, af: false},
+	 {id: 'blackrose', name: 'Akira Hayami', image: 'images/blackrose.png', main: false, incleg: true, af: false},
+	 {id: 'blake_belladonna', name: 'Blake Belladonna', image: 'images/blakebelladonna.png', main: false, incleg: true, af: false},
+	 {id: 'bobobo', name: 'Bobobo-bo Bobo-bo', image: 'images/bobobo.png', main: true, incleg: false, af: false},
+	 {id: 'bowsette', name: 'Bowsette', image: 'images/bowsette.png', main: true, incleg: false, af: false},
+	 {id: 'brock', name: 'Brock', image: 'images/brock.png', main: true, incleg: false, af: false},
+	 {id: 'buffy', name: 'Buffy Summers', image: 'images/buffy.png', main: true, incleg: false, af: false},
+	 {id: 'bulma', name: 'Bulma Briefs', image: 'images/bulma.png', main: false, incleg: true, af: false},
+	 {id: 'cadence', name: 'DJ Cadence', image: 'images/zzzzz-1752182373cadence.png', main: false, incleg: false, af: false},
+	 {id: 'cagliostro', name: 'Cagliostro', image: 'images/cagliostro.png', main: true, incleg: false, af: false},
+	 {id: 'caitlin', name: 'Caitlin', image: 'images/caitlin.png', main: true, incleg: false, af: false},
+	 {id: 'caleb', name: 'Caleb Felidae', image: 'images/caleb.png', main: false, incleg: true, af: false},
+	 {id: 'calisto', name: 'Calisto Yew', image: 'images/calisto.png', main: false, incleg: true, af: false},
+	 {id: 'cammy_white', name: 'Cammy White', image: 'images/cammywhite.png', main: true, incleg: false, af: false},
+	 {id: 'captain_america', name: 'Steve Rogers', image: 'images/captainamerica.png', main: false, incleg: true, af: false},
+	 {id: 'captain_falcon', name: 'Douglas Jay Falcon', image: 'images/captainfalcon.png', main: false, incleg: true, af: false},
+	 {id: 'carmine', name: 'Carmine', image: 'images/zzzzz-1733767101carmine.png', main: true, incleg: false, af: false},
+	 {id: 'catria', name: 'Catria', image: 'images/catria.png', main: true, incleg: false, af: false},
+	 {id: 'cats', name: 'CATS ', image: 'images/cats.png', main: true, incleg: false, af: true},
+	 {id: 'caulifla', name: 'Caulifla', image: 'images/caulifla.png', main: true, incleg: false, af: false},
+	 {id: 'chara_dreemurr', name: 'Chara Dreemurr', image: 'images/charadreemurr.png', main: true, incleg: false, af: false},
+	 {id: 'charlie', name: 'Charlie Magne', image: 'images/charlie.png', main: false, incleg: true, af: false},
+	 {id: 'chazz', name: 'Chazz Princeton', image: 'images/chazz.png', main: true, incleg: false, af: false},
+	 {id: 'chell_wheatley', name: 'Chell', image: 'images/chellwheatley.png', main: false, incleg: true, af: false},
+	 {id: 'cheryl', name: 'Cheryl Mason', image: 'images/cheryl2.png', main: true, incleg: false, af: false},
+	 {id: 'chiaki', name: 'Chiaki Nanami', image: 'images/zzzzz-1722963352chiaki.png', main: false, incleg: false, af: false},
+	 {id: 'chica', name: 'Toy Chica 2.0', image: 'images/chica.png', main: false, incleg: true, af: false},
+	 {id: 'chie', name: 'Chie Satonaka', image: 'images/chie.png', main: false, incleg: true, af: false},
+	 {id: 'chihiro', name: 'Chihiro Fujisaki', image: 'images/chihiro.png', main: true, incleg: false, af: false},
+	 {id: 'chun-li', name: 'Chun-Li', image: 'images/chun-li.png', main: true, incleg: false, af: false},
+	 {id: 'ciri', name: 'Cirilla Fiona Elen Riannon', image: 'images/ciri.png', main: false, incleg: true, af: false},
+	 {id: 'clover', name: 'Clover Field', image: 'images/clover.png', main: false, incleg: true, af: false},
+	 {id: 'coco', name: 'Coco Adel', image: 'images/coco.png', main: true, incleg: false, af: false},
+	 {id: 'colress', name: 'Colress', image: 'images/colress.png', main: false, incleg: true, af: false},
+	 {id: 'colt', name: 'Colt', image: 'images/colt.png', main: false, incleg: true, af: false},
+	 {id: 'connie', name: 'Connie Maheswaran', image: 'images/connie.png', main: false, incleg: true, af: false},
+	 {id: 'constance', name: 'Constance von Nuvelle', image: 'images/zzzzz-1726057934constance.png', main: false, incleg: true, af: false},
+	 {id: 'constanze', name: 'Constanze Amalie von Braunschbank-Albrechtsberger', image: 'images/constanze.png', main: true, incleg: false, af: true},
+	 {id: 'corrin_f', name: 'Corrin (Female)', image: 'images/corrinf.png', main: true, incleg: true, af: false},
+	 {id: 'corrin_m', name: 'Corrin', image: 'images/corrinm.png', main: true, incleg: true, af: false},
+	 {id: 'critical_darling', name: 'Ibuki Akiyama', image: 'images/criticaldarling.png', main: true, incleg: false, af: false},
+	 {id: 'croix', name: 'Croix Meridies', image: 'images/croix.png', main: true, incleg: false, af: false},
+	 {id: 'cynthia', name: 'Cynthia', image: 'images/cynthia.png', main: true, incleg: false, af: false},
+	 {id: 'd.va', name: 'D.va', image: 'images/dva.png', main: false, incleg: true, af: false},
+	 {id: 'daisy', name: 'Princess Daisy', image: 'images/daisy.png', main: false, incleg: true, af: false},
+	 {id: 'daphne', name: 'Daphne Blake', image: 'images/daphne.png', main: false, incleg: true, af: false},
+	 {id: 'daria', name: 'Daria Morgendorffer', image: 'images/daria.png', main: false, incleg: true, af: false},
+	 {id: 'dark_magician_girl', name: 'Dark Magician Girl', image: 'images/darkmagiciangirl.png', main: true, incleg: false, af: false},
+	 {id: 'darkness', name: 'Darkness', image: 'images/darkness.png', main: true, incleg: false, af: false},
+	 {id: 'dawn', name: 'Dawn', image: 'images/dawn.png', main: true, incleg: false, af: false},
+	 {id: 'death', name: 'Death', image: 'images/death.png', main: false, incleg: true, af: false},
+	 {id: 'default_chan', name: 'Default-chan Character', image: 'images/default-chan.png', main: true, incleg: false, af: true},
+	 {id: 'deimos', name: 'Deimos', image: 'images/deimos.png', main: false, incleg: true, af: false},
+	 {id: 'derpette', name: 'Derpette', image: 'images/derpette.png', main: true, incleg: false, af: true},
+	 {id: 'derpina', name: 'Derpina', image: 'images/derpina.png', main: true, incleg: false, af: true},
+	 {id: 'dorothy', name: 'Dorothy Haze', image: 'images/dorothy.png', main: false, incleg: true, af: false},
+	 {id: 'dreamcatcher', name: 'Dreamcatcher', image: 'images/zzzzz-1743536394dreamcatcher.png', main: true, incleg: false, af: true},
+	 {id: 'dunban', name: 'Dunban', image: 'images/dunban.png', main: true, incleg: false, af: false},
+	 {id: 'dust', name: 'Dust', image: 'images/dust.png', main: true, incleg: false, af: false},
+	 {id: 'dwight', name: 'Dwight Fairfield', image: 'images/dwight.png', main: true, incleg: false, af: false},
+	 {id: 'edelgard', name: 'Edelgard von Hresvelg', image: 'images/zzzzz-1765928090edelgard.png', main: false, incleg: false, af: false},
+	 {id: 'eichi', name: 'Eichi Tenshouin', image: 'images/eichi.png', main: true, incleg: false, af: false},
+	 {id: 'el_shaggy_blanco', name: 'El Shaggy Blanco', image: 'images/elshaggyblanco.png', main: true, incleg: false, af: true},
+	 {id: 'elaine', name: 'Elaine Marley', image: 'images/elaine.png', main: false, incleg: true, af: false},
+	 {id: 'elena', name: 'Elena Castillo Flores', image: 'images/elena.png', main: false, incleg: true, af: false},
+	 {id: 'elesa', name: 'Elesa', image: 'images/elesa.png', main: true, incleg: false, af: false},
+	 {id: 'elizabeth', name: 'Elizabeth Comstock', image: 'images/elizabeth.png', main: true, incleg: false, af: false},
+	 {id: 'elpheba', name: 'Elphaba Thropp', image: 'images/elphaba.png', main: true, incleg: false, af: false},
+	 {id: 'elsa', name: 'Elsa', image: 'images/elsa.png', main: false, incleg: true, af: false},
+	 {id: 'emi', name: 'Emi Ibarazaki', image: 'images/emi.png', main: true, incleg: false, af: false},
+	 {id: 'erufada', name: 'Erufuda', image: 'images/erufuda.png', main: true, incleg: false, af: false},
+	 {id: 'erza', name: 'Erza Scarlet', image: 'images/erza.png', main: false, incleg: true, af: false},
+	 {id: 'estelle', name: 'Estelle Sidos Heurassein', image: 'images/estelle.png', main: true, incleg: false, af: false},
+	 {id: 'evie', name: 'Evie the Ice Witch', image: 'images/evie.png', main: false, incleg: true, af: false},
+	 {id: 'faye', name: 'Faye Valentine', image: 'images/faye.png', main: false, incleg: true, af: false},
+	 {id: 'felicia', name: 'Felicia', image: 'images/felicia.png', main: true, incleg: false, af: true},
+	 {id: 'felix', name: 'Felix Argyle', image: 'images/felix.png', main: true, incleg: false, af: false},
+	 {id: 'fernando', name: 'Fernando', image: 'images/fernando.png', main: true, incleg: false, af: true},
+	 {id: 'fina', name: 'Fina', image: 'images/fina.png', main: true, incleg: false, af: false},
+	 {id: 'fischl', name: 'Amy "Fischl" von Luftschloss Narfidort', image: 'images/fischl.png', main: true, incleg: false, af: false},
+	 {id: 'flash', name: 'Lia Nelson', image: 'images/zzzzz-1731190426flash.png', main: false, incleg: true, af: false},
+	 {id: 'florina', name: 'Florina', image: 'images/florina.png', main: true, incleg: false, af: false},
+	 {id: 'fluttershy', name: 'Fluttershy', image: 'images/fluttershy.png', main: true, incleg: false, af: false},
+	 {id: 'franziska', name: 'Franziska von Karma', image: 'images/franziska.png', main: true, incleg: false, af: false},
+	 {id: 'fred', name: 'Fred Jones', image: 'images/fred.png', main: false, incleg: true, af: false},
+	 {id: 'freddie', name: 'Freddie Freaker', image: 'images/freddie.png', main: true, incleg: false, af: true},
+	 {id: 'frisk_and_friends', name: 'Frisk Undertale', image: 'images/friskandfriends.png', main: true, incleg: false, af: true},
+	 {id: 'futaba', name: 'Futaba Sakura', image: 'images/zzzzz-1726692017futaba.png', main: true, incleg: false, af: false},
+	 {id: 'gaige', name: 'Gaige', image: 'images/gaige.png', main: false, incleg: true, af: false},
+	 {id: 'galatea', name: 'Galatea', image: 'images/galatea.png', main: true, incleg: false, af: false},
+	 {id: 'ganyu', name: 'Ganyu', image: 'images/ganyu.png', main: false, incleg: true, af: false},
+	 {id: 'gay_spaghetti_chef', name: 'Gay Spaghetti Chef', image: 'images/gayspaghettichef.png', main: true, incleg: false, af: true},
+	 {id: 'girlfriend', name: 'Girlfriend', image: 'images/girlfriend.png', main: true, incleg: false, af: true},
+	 {id: 'giygas', name: 'Giygas', image: 'images/giygas.png', main: true, incleg: false, af: true},
+	 {id: 'glamrock_chica', name: 'Chica Chicken', image: 'images/zzzzz-1720272174glamrockchica.png', main: true, incleg: false, af: false},
+	 {id: 'glass_joe', name: 'Glass Joe', image: 'images/glassjoe.png', main: true, incleg: false, af: true},
+	 {id: 'gloria', name: 'Gloria', image: 'images/gloria.png', main: true, incleg: false, af: false},
+	 {id: 'gogo', name: 'GoGo Tomago', image: 'images/gogo.png', main: false, incleg: true, af: false},
+	 {id: 'gray', name: 'Gray Fullbuster', image: 'images/gray.png', main: true, incleg: false, af: true},
+	 {id: 'gruntilda', name: 'Gruntilda Winkybunion', image: 'images/gruntilda.png', main: true, incleg: false, af: true},
+	 {id: 'guzma', name: 'Guzma', image: 'images/guzma.png', main: true, incleg: false, af: false},
+	 {id: 'gwen', name: 'Gwendolyne Stacy', image: 'images/gwen.png', main: true, incleg: false, af: false},
+	 {id: 'hanako', name: 'Hanako Ikezawa', image: 'images/hanako.png', main: true, incleg: false, af: false},
+	 {id: 'harley', name: 'Harley Quinn', image: 'images/harley.png', main: false, incleg: true, af: false},
+	 {id: 'haru', name: 'Haru Okumura', image: 'images/haru.png', main: true, incleg: false, af: false},
+	 {id: 'hatsune_miku', name: 'Hatsune Miku', image: 'images/hatsunemiku.png', main: true, incleg: false, af: false},
+	 {id: 'helper-chan', name: 'Helper-chan', image: 'images/helper-chan.png', main: true, incleg: false, af: true},
+	 {id: 'heris', name: 'Heris Ardebit', image: 'images/heris.png', main: true, incleg: false, af: false},
+	 {id: 'hermione_granger', name: 'Hermione Granger', image: 'images/hermionegranger.png', main: false, incleg: true, af: false},
+	 {id: 'hex_maniac', name: 'hex Maniac', image: 'images/zzzzz-1757271738hexmaniac.png', main: true, incleg: false, af: false},
+	 {id: 'hilbert', name: 'Hilbert', image: 'images/zzzzz-1752182373hilbert.png', main: false, incleg: true, af: false},
+	 {id: 'hilda', name: 'Hilda Valentine Goneril', image: 'images/hilda.png', main: false, incleg: false, af: false},
+	 {id: 'hinata', name: 'Hinata Hyuuga', image: 'images/hinata.png', main: false, incleg: true, af: false},
+	 {id: 'hk416', name: 'HK416', image: 'images/hk416.png', main: false, incleg: true, af: false},
+	 {id: 'hope', name: 'Hope Alanzi', image: 'images/hope.png', main: false, incleg: true, af: false},
+	 {id: 'hot_spring_woman', name: 'Hot Spring Woman', image: 'images/hotspringwoman.png', main: true, incleg: false, af: true},
+	 {id: 'hu_tao', name: 'Hu Tao', image: 'images/hutao.png', main: true, incleg: false, af: false},
+	 {id: 'ignatz', name: 'Ignatz Victor', image: 'images/ignatz.png', main: true, incleg: false, af: false},
+	 {id: 'ini', name: 'Ini Miney', image: 'images/ini.png', main: true, incleg: false, af: false},
+	 {id: 'jane', name: 'Jane Lane', image: 'images/jane.png', main: false, incleg: true, af: false},
+	 {id: 'jasmine', name: 'Princess Jasmine', image: 'images/jasmine.png', main: false, incleg: true, af: false},
+	 {id: 'jason', name: 'Jason Voorhees', image: 'images/jason.png', main: false, incleg: true, af: false},
+	 {id: 'jean', name: 'Jean Gunnhildr', image: 'images/zzzzz-1722963352jean.png', main: true, incleg: false, af: false},
+	 {id: 'jenetta', name: 'Jenetta', image: 'images/zzzzz-1760653960jenetta.png', main: false, incleg: false, af: false},
+	 {id: 'jenna', name: 'Jenna', image: 'images/jenna.png', main: true, incleg: false, af: false},
+	 {id: 'jessie', name: 'Jessie Maye', image: 'images/jessie.png', main: true, incleg: false, af: false},
+	 {id: 'jill', name: 'Jill Valentine', image: 'images/jill.png', main: false, incleg: true, af: false},
+	 {id: 'jim', name: 'Jim Raynor', image: 'images/zzzzz-1746290744jim.png', main: true, incleg: false, af: false},
+	 {id: 'jin', name: 'Yuichi Jin', image: 'images/jin.png', main: true, incleg: false, af: false},
+	 {id: 'joey', name: 'Joetta Grimaldi', image: 'images/zzzzz-1730317902joey.png', main: true, incleg: false, af: false},
+	 {id: 'jolyne', name: 'Jolyne Cujoh', image: 'images/jolyne.png', main: true, incleg: false, af: false},
+	 {id: 'jotaro', name: 'Jotaro Kujo', image: 'images/jotaro.png', main: true, incleg: false, af: false},
+	 {id: 'jubilee', name: 'Jubilee', image: 'images/jubilee.png', main: false, incleg: true, af: false},
+	 {id: 'juno', name: 'Teo Minh', image: 'images/zzzzz-1728193466juno.png', main: true, incleg: false, af: false},
+	 {id: 'jura', name: 'Jura Basil Elden', image: 'images/jura.png', main: true, incleg: false, af: false},
+	 {id: 'juri', name: 'Juri Han', image: 'images/juri.png', main: true, incleg: false, af: false},
+	 {id: 'justice', name: 'Justice', image: 'images/zzzzz-1740866549justice.png', main: false, incleg: true, af: false},
+	 {id: 'kali', name: 'Kali Belladonna', image: 'images/kali.png', main: false, incleg: true, af: false},
+	 {id: 'kamina', name: 'Kamina Jiha', image: 'images/zzzzz-1753242309kamina.png', main: true, incleg: false, af: false},
+	 {id: 'karin', name: 'Karin Algernon Sauer', image: 'images/zzzzz-1729453581karin.png', main: false, incleg: true, af: false},
+	 {id: 'kaz', name: 'Kaz Kaan', image: 'images/zzzzz-1726692017kaz.png', main: true, incleg: false, af: false},
+	 {id: 'kazuma', name: 'Kazuma Satou', image: 'images/kazuma.png', main: true, incleg: false, af: false},
+	 {id: 'kekko_kamen', name: 'Kekko Kamen', image: 'images/kekkokamen.png', main: true, incleg: false, af: true},
+	 {id: 'kim', name: 'Kim Possible', image: 'images/kim.png', main: false, incleg: true, af: false},
+	 {id: 'kimberly', name: 'Kimberly Hart', image: 'images/kimberly.png', main: false, incleg: true, af: false},
+	 {id: 'kira', name: 'Yoshikage Kira', image: 'images/kira.png', main: true, incleg: false, af: true},
+	 {id: 'kizuna', name: 'Kizuna Ai', image: 'images/kizuna.png', main: true, incleg: false, af: false},
+	 {id: 'kokichi', name: 'Kokichi Ouma', image: 'images/kokichi.png', main: false, incleg: false, af: false},
+	 {id: 'komi-san', name: 'Shouko Komi', image: 'images/komi-san.png', main: true, incleg: false, af: false},
+	 {id: 'koneko-chan', name: 'Koneko-Chan Neko', image: 'images/koneko-chan.png', main: true, incleg: false, af: true},
+	 {id: 'kool-aid', name: 'kool-aid Character', image: 'images/kool-aid.png', main: true, incleg: false, af: true},
+	 {id: 'kora', name: 'Kora', image: 'images/kora.png', main: true, incleg: false, af: false},
+	 {id: 'korra', name: 'Korra', image: 'images/korra.png', main: false, incleg: true, af: false},
+	 {id: 'kumatora', name: 'Kumatora', image: 'images/kumatora.png', main: true, incleg: false, af: false},
+	 {id: 'kurumu', name: 'Kurumu Kurono', image: 'images/kurumu.png', main: true, incleg: true, af: false},
+	 {id: 'kyoko_kirigiri', name: 'Kyoko Kirigiri', image: 'images/kyokokirigiri.png', main: true, incleg: false, af: false},
+	 {id: 'kyou', name: 'Kyou Fujibayashi', image: 'images/kyou.png', main: true, incleg: false, af: false},
+	 {id: 'kyouko_toshinou', name: 'Kyouko Toshinou', image: 'images/kyoukotoshinou.png', main: true, incleg: false, af: false},
+	 {id: 'kyu', name: 'Kyu Sugardust', image: 'images/kyu.png', main: true, incleg: false, af: false},
+	 {id: 'laevatein', name: 'Laevatein', image: 'images/laevatein.png', main: true, incleg: false, af: false},
+	 {id: 'lara', name: 'Lara Croft', image: 'images/lara.png', main: false, incleg: true, af: false},
+	 {id: 'larachel', name: 'L\'Arachel', image: 'images/larachel.png', main: true, incleg: false, af: false},
+	 {id: 'launch', name: 'Launch', image: 'images/launch.png', main: true, incleg: false, af: false},
+	 {id: 'leafy', name: 'Leafy', image: 'images/leafy.png', main: false, incleg: true, af: false},
+	 {id: 'leela', name: 'Turanga Leela', image: 'images/leela.png', main: false, incleg: true, af: false},
+	 {id: 'leggy', name: 'Leggy Lamb', image: 'images/leggy.png', main: true, incleg: false, af: false},
+	 {id: 'leo', name: 'Leo Kasper', image: 'images/leo.png', main: false, incleg: true, af: false},
+	 {id: 'leon', name: 'Leon S. Kennedy', image: 'images/leon.png', main: true, incleg: false, af: false},
+	 {id: 'leonie', name: 'Leonie Pinelli', image: 'images/leonie.png', main: true, incleg: false, af: false},
+	 {id: 'leviathan', name: 'Fairy Leviathan', image: 'images/leviathan.png', main: true, incleg: false, af: false},
+	 {id: 'lilith', name: 'Lilith Cashlin', image: 'images/lilith.png', main: false, incleg: true, af: false},
+	 {id: 'link', name: 'Link', image: 'images/link.png', main: true, incleg: false, af: true},
+	 {id: 'lotte', name: 'Lotte Jansson', image: 'images/lotte.png', main: true, incleg: false, af: false},
+	 {id: 'lucina', name: 'Lucina', image: 'images/lucina.png', main: true, incleg: false, af: false},
+	 {id: 'lucy', name: 'Lucy Heartfilia', image: 'images/lucy.png', main: false, incleg: true, af: false},
+	 {id: 'lux', name: 'Luxanna Crownguard', image: 'images/lux.png', main: true, incleg: false, af: false},
+	 {id: 'lymilark', name: 'Lymilark Cimeni', image: 'images/lymilark.png', main: false, incleg: true, af: false},
+	 {id: 'lyn', name: 'Lyn', image: 'images/lyn.png', main: true, incleg: false, af: false},
+	 {id: 'lyralei', name: 'Lyralei', image: 'images/lyralei.png', main: true, incleg: false, af: false},
+	 {id: 'lysithea', name: 'Lysithea von Ordelia', image: 'images/lysithea.png', main: true, incleg: false, af: false},
+	 {id: 'mae', name: 'Mae Borowski', image: 'images/mae.png', main: true, incleg: false, af: false},
+	 {id: 'magical_sempai', name: 'Magical Sempai', image: 'images/magicalsempai.png', main: false, incleg: true, af: false},
+	 {id: 'magma_grunt', name: 'Magma Grunt', image: 'images/magmagrunt.png', main: true, incleg: false, af: false},
+	 {id: 'mahiru', name: 'Mahiru Koizumi', image: 'images/mahiru.png', main: true, incleg: false, af: false},
+	 {id: 'maki', name: 'Maki Nishikino', image: 'images/maki.png', main: false, incleg: true, af: false},
+	 {id: 'mara_jade', name: 'Mara Jade', image: 'images/marajade.png', main: false, incleg: true, af: false},
+	 {id: 'marceline', name: 'Marceline Abadeer', image: 'images/marceline.png', main: false, incleg: true, af: false},
+	 {id: 'mari', name: 'Mari', image: 'images/mari.png', main: true, incleg: false, af: false},
+	 {id: 'mari_setogaya', name: 'Mari Setogaya', image: 'images/marisetogaya.png', main: true, incleg: false, af: false},
+	 {id: 'maria', name: 'Maria', image: 'images/maria.png', main: true, incleg: false, af: false},
+	 {id: 'marinette', name: 'Marinette Dupain-Cheng', image: 'images/marinette.png', main: true, incleg: false, af: false},
+	 {id: 'mary', name: 'Mary Calvin', image: 'images/mary.png', main: true, incleg: false, af: false},
+	 {id: 'mavis', name: 'Mavis Dracula', image: 'images/mavis.png', main: true, incleg: false, af: false},
+	 {id: 'may', name: 'May', image: 'images/may.png', main: true, incleg: false, af: false},
+	 {id: 'meg', name: 'Meg Thomas', image: 'images/meg.png', main: false, incleg: true, af: false},
+	 {id: 'megamix', name: 'Megamix', image: 'images/megamix.png', main: true, incleg: false, af: true},
+	 {id: 'megumin', name: 'Megumin of the Crimson Demons', image: 'images/megumin.png', main: true, incleg: false, af: false},
+	 {id: 'mei', name: 'Mei', image: 'images/mei.png', main: true, incleg: true, af: false},
+	 {id: 'meia', name: 'Meia Gisborn', image: 'images/meia.png', main: true, incleg: false, af: false},
+	 {id: 'mercy', name: 'Angela Ziegler', image: 'images/mercy.png', main: true, incleg: false, af: false},
+	 {id: 'merlin', name: 'Merlin', image: 'images/merlin.png', main: false, incleg: true, af: false},
+	 {id: 'merula', name: 'Merula Snyde', image: 'images/merula.png', main: false, incleg: true, af: false},
+	 {id: 'mettaton', name: 'Mettaton', image: 'images/mettaton.png', main: false, incleg: true, af: false},
+	 {id: 'mia', name: 'Mia Fey', image: 'images/mia.png', main: false, incleg: true, af: false},
+	 {id: 'mia_golden_sun', name: 'Mia', image: 'images/miagoldensun.png', main: true, incleg: false, af: false},
+	 {id: 'mikan', name: 'Mikan Tsumiki', image: 'images/mikan.png', main: true, incleg: false, af: false},
+	 {id: 'miki_miura', name: 'Miki Miura', image: 'images/mikimiura.png', main: false, incleg: true, af: false},
+	 {id: 'miko', name: 'Toyosatomimi no Miko', image: 'images/zzzzz-1738979296miko.png', main: true, incleg: false, af: false},
+	 {id: 'mileena', name: 'Mileena', image: 'images/zzzzz-1765928090mileena.png', main: true, incleg: false, af: true},
+	 {id: 'misaka', name: 'Mikoto Misaka', image: 'images/misaka.png', main: false, incleg: true, af: false},
+	 {id: 'misato', name: 'Misato Katsuragi', image: 'images/misato.png', main: true, incleg: false, af: false},
+	 {id: 'mister_clean', name: 'Mister Clean', image: 'images/misterclean.png', main: true, incleg: false, af: true},
+	 {id: 'misty_hgss', name: 'Misty', image: 'images/mistyhgss.png', main: true, incleg: false, af: false},
+	 {id: 'mitama', name: 'Mitama', image: 'images/mitama.png', main: true, incleg: false, af: false},
+	 {id: 'mom_alola', name: 'Mom (Alola)', image: 'images/momalola.png', main: true, incleg: false, af: true},
+	 {id: 'momo', name: 'Momo Yaoyorozu', image: 'images/zzzzz-1723234343momo.png', main: true, incleg: false, af: false},
+	 {id: 'monika', name: 'Monika', image: 'images/monika.png', main: true, incleg: false, af: false},
+	 {id: 'monique', name: 'Monique Lecoq', image: 'images/zzzzz-1743536394monique.png', main: true, incleg: false, af: true},
+	 {id: 'moon', name: 'Moon', image: 'images/moon.png', main: true, incleg: false, af: false},
+	 {id: 'mordred', name: 'Mordred Pendragon', image: 'images/mordred.png', main: false, incleg: true, af: false},
+	 {id: 'morrigan', name: 'Morrigan Aensland', image: 'images/morrigan.png', main: true, incleg: true, af: false},
+	 {id: 'moskii', name: 'Moskii', image: 'images/zzzzz-1723051721moskii.png', main: true, incleg: false, af: false},
+	 {id: 'ms.fortune', name: 'Nadia Fortune', image: 'images/msfortune.png', main: true, incleg: false, af: false},
+	 {id: 'mulan', name: 'Mulan Fa', image: 'images/mulan.png', main: true, incleg: false, af: false},
+	 {id: 'myriam', name: 'Myriam Scuttlebutt', image: 'images/myriam.png', main: true, incleg: false, af: false},
+	 {id: 'mythra', name: 'Mythra', image: 'images/mythra.png', main: false, incleg: true, af: false},
+	 {id: 'n', name: 'N Harmonia', image: 'images/n.png', main: true, incleg: false, af: false},
+	 {id: 'nadeshiko', name: 'Nadeshiko Kagamihara', image: 'images/nadeshiko.png', main: true, incleg: false, af: false},
+	 {id: 'nagamimi', name: 'Nagamimi ', image: 'images/nagamimi.png', main: false, incleg: true, af: false},
+	 {id: 'nagatoro', name: 'Hayase Nagatoro', image: 'images/nagatoro.png', main: true, incleg: false, af: false},
+	 {id: 'nagisa', name: 'Nagisa Furukawa', image: 'images/nagisa.png', main: true, incleg: false, af: false},
+	 {id: 'nami', name: 'Nami', image: 'images/nami.png', main: true, incleg: false, af: false},
+	 {id: 'nami_szs', name: 'Nami Hito', image: 'images/namiszs.png', main: true, incleg: false, af: true},
+	 {id: 'nanoko_chan', name: 'Nanoko Sakura', image: 'images/nanoko-chan.png', main: false, incleg: true, af: false},
+	 {id: 'natasha', name: 'Natasha Cerebellum', image: 'images/natasha.png', main: true, incleg: false, af: false},
+	 {id: 'natsuki', name: 'Natsuki', image: 'images/natsuki.png', main: true, incleg: false, af: false},
+	 {id: 'navi', name: 'Navi', image: 'images/navi.png', main: true, incleg: false, af: false},
+	 {id: 'nayru', name: 'Nayru', image: 'images/nayru.png', main: true, incleg: false, af: false},
+	 {id: 'neo', name: 'Neopolitan', image: 'images/neo.png', main: true, incleg: true, af: false},
+	 {id: 'nephenee', name: 'Nephenee', image: 'images/nephenee.png', main: true, incleg: false, af: false},
+	 {id: 'neptune', name: 'Neptune (Purple Heart)', image: 'images/neptune.png', main: true, incleg: false, af: false},
+	 {id: 'nico_robin', name: 'Robin Nico', image: 'images/nicorobin.png', main: true, incleg: false, af: false},
+	 {id: 'ninetales', name: 'Ninetales', image: 'images/ninetales.png', main: true, incleg: false, af: true},
+	 {id: 'nodoka', name: 'Nodoka Manabe', image: 'images/nodoka.png', main: false, incleg: true, af: false},
+	 {id: 'noelle', name: 'Noelle', image: 'images/noelle.png', main: true, incleg: false, af: false},
+	 {id: 'noire', name: 'Noire (Black Heart)', image: 'images/noire.png', main: true, incleg: false, af: false},
+	 {id: 'nonon', name: 'Nonon Jakuzure', image: 'images/nonon.png', main: true, incleg: false, af: false},
+	 {id: 'nugi-chan', name: 'Gin Hamada', image: 'images/nugi-chan.png', main: false, incleg: true, af: false},
+	 {id: 'okino', name: 'Tsukasa Okino', image: 'images/okino.png', main: false, incleg: true, af: false},
+	 {id: 'orendi', name: 'Orendi', image: 'images/zzzzz-1719064977orendi.png', main: true, incleg: false, af: false},
+	 {id: 'pa-15', name: 'PA-15 ', image: 'images/pa-15.png', main: true, incleg: false, af: false},
+	 {id: 'palutena', name: 'Palutena', image: 'images/palutena.png', main: true, incleg: false, af: false},
+	 {id: 'panty', name: 'Panty Anarchy', image: 'images/panty.png', main: true, incleg: false, af: false},
+	 {id: 'pauling', name: 'Miss Pauling', image: 'images/pauling.png', main: false, incleg: true, af: false},
+	 {id: 'paya', name: 'Paya', image: 'images/paya.png', main: false, incleg: true, af: false},
+	 {id: 'peach', name: 'Princess Peach', image: 'images/peach.png', main: false, incleg: true, af: false},
+	 {id: 'pearl', name: 'Pearl', image: 'images/pearl.png', main: false, incleg: true, af: false},
+	 {id: 'penny', name: 'Penny', image: 'images/penny.png', main: false, incleg: true, af: false},
+	 {id: 'penny_polendina', name: 'Penny Polendena', image: 'images/pennypolendina.png', main: false, incleg: true, af: false},
+	 {id: 'perona', name: 'Perona', image: 'images/perona.png', main: true, incleg: false, af: false},
+	 {id: 'petra', name: 'Petra Macneary', image: 'images/petra.png', main: true, incleg: false, af: false},
+	 {id: 'pinkie_pie', name: 'Pinkie Pie', image: 'images/pinkiepie2.png', main: true, incleg: false, af: false},
+	 {id: 'piper', name: 'Piper Wright', image: 'images/piper.png', main: false, incleg: true, af: false},
+	 {id: 'pit', name: 'Pit', image: 'images/pit.png', main: true, incleg: false, af: false},
+	 {id: 'pokemon_fisher', name: 'Fisher', image: 'images/zzzzz-1743536394pokemonfisher.png', main: true, incleg: false, af: true},
+	 {id: 'polly', name: 'Polina Geist', image: 'images/polly.png', main: true, incleg: false, af: false},
+	 {id: 'pot_of_greed', name: 'Pot of Greed', image: 'images/potofgreed.png', main: true, incleg: false, af: true},
+	 {id: 'priscilla', name: 'Priscilla Barielle', image: 'images/zzzzz-1727623376priscilla.png', main: false, incleg: false, af: false},
+	 {id: 'purah', name: 'Purah', image: 'images/zzzzz-1766184212purah.png', main: false, incleg: false, af: false},
+	 {id: 'pyrrha', name: 'Pyrrha Nikos', image: 'images/pyrrha.png', main: true, incleg: false, af: false},
+	 {id: 'queenie', name: 'Queen of Hatred', image: 'images/queenie.png', main: true, incleg: false, af: false},
+	 {id: 'rainbow_dash', name: 'Rainbow Dash', image: 'images/zzzzz-1719065589rainbowdash.png', main: true, incleg: false, af: false},
+	 {id: 'rainbow_mika', name: 'Mika Nanakawa', image: 'images/rainbowmika.png', main: true, incleg: false, af: false},
+	 {id: 'raine_sage', name: 'Raine Sage', image: 'images/zzzzz-1757271738rainesage.png', main: false, incleg: false, af: false},
+	 {id: 'raku_chan', name: 'Raku-Chan Character', image: 'images/raku-chan.png', main: true, incleg: false, af: true},
+	 {id: 'rarity_eg', name: 'Rarity', image: 'images/rarityeg.png', main: true, incleg: false, af: false},
+	 {id: 'raven', name: 'Raven Roth', image: 'images/raven.png', main: true, incleg: false, af: false},
+	 {id: 'reagan', name: 'Reagan Ridley', image: 'images/zzzzz-1765928090reagan.png', main: false, incleg: false, af: false},
+	 {id: 'reimu', name: 'Reimu Hakurei', image: 'images/reimu.png', main: true, incleg: false, af: false},
+	 {id: 'remilia', name: 'Remilia Scarlet', image: 'images/remilia.png', main: true, incleg: false, af: false},
+	 {id: 'revy', name: 'Revy', image: 'images/revy.png', main: true, incleg: false, af: false},
+	 {id: 'ribbon_girl', name: 'Ribbon Girl', image: 'images/ribbongirl.png', main: true, incleg: false, af: false},
+	 {id: 'rin', name: 'Rin Tezuka', image: 'images/zzzzz-1750734839rin.png', main: true, incleg: false, af: false},
+	 {id: 'rin_kagamine', name: 'Rin Kagamine', image: 'images/rinkagamine.png', main: false, incleg: true, af: false},
+	 {id: 'ringo_ando', name: 'Ringo Ando', image: 'images/zzzzz-1743536394ringoando.png', main: true, incleg: false, af: false},
+	 {id: 'rinkah', name: 'Rinkah of the Flame Tribe', image: 'images/rinkah.png', main: true, incleg: false, af: false},
+	 {id: 'rita', name: 'Rita Mordio', image: 'images/rita.png', main: false, incleg: true, af: false},
+	 {id: 'riva', name: 'Riva', image: 'images/riva.png', main: false, incleg: true, af: false},
+	 {id: 'rogue_x-men', name: 'Anna Marie Darkholme', image: 'images/roguex-men.png', main: true, incleg: false, af: true},
+	 {id: 'roll', name: 'Roll Light', image: 'images/roll.png', main: false, incleg: true, af: false},
+	 {id: 'rol_casket', name: 'Roll Caskett', image: 'images/rollcaskett.png', main: true, incleg: false, af: false},
+	 {id: 'rosa', name: 'Rosa', image: 'images/rosa.png', main: true, incleg: false, af: false},
+	 {id: 'rosalina', name: 'Rosalina', image: 'images/rosalina.png', main: false, incleg: true, af: false},
+	 {id: 'rose', name: 'Rose', image: 'images/rose.png', main: true, incleg: false, af: false},
+	 {id: 'rosie', name: 'Rosie Richmond', image: 'images/zzzzz-1743536394rosie.png', main: false, incleg: false, af: false},
+	 {id: 'rouge', name: 'Rouge the Bat', image: 'images/rouge.png', main: true, incleg: false, af: false},
+	 {id: 'roxanne_wolf', name: 'Roxanne Wolf', image: 'images/zzzzz-1748803458roxannewolf.png', main: false, incleg: true, af: false},
+	 {id: 'roxie', name: 'Roxie', image: 'images/roxie.png', main: false, incleg: true, af: false},
+	 {id: 'ruby', name: 'Ruby Rose', image: 'images/ruby.png', main: true, incleg: false, af: false},
+	 {id: 'ruka', name: 'Ruka Urushibara', image: 'images/ruka.png', main: false, incleg: true, af: false},
+	 {id: 'ryu', name: 'Ryu Hoshi', image: 'images/ryu.png', main: false, incleg: true, af: false},
+	 {id: 'ryuji', name: 'Ryuji Sakamoto', image: 'images/ryuji.png', main: true, incleg: false, af: false},
+	 {id: 'ryuko', name: 'Ryuko Matoi', image: 'images/ryuko.png', main: true, incleg: false, af: false},
+	 {id: 'saki', name: 'Saki Yoshida', image: 'images/zzzzz-1740866549saki.png', main: true, incleg: false, af: false},
+	 {id: 'saki_zls', name: 'Saki Nikaidou', image: 'images/sakizls.png', main: true, incleg: false, af: false},
+	 {id: 'sakura', name: 'Sakura Minamoto', image: 'images/sakura.png', main: true, incleg: false, af: false},
+	 {id: 'samus_aran', name: 'Samus Aran', image: 'images/samusaran.png', main: true, incleg: false, af: false},
+	 {id: 'sanako', name: 'Sanako Isogai', image: 'images/sanako.png', main: true, incleg: false, af: false},
+	 {id: 'sandy_cheeks', name: 'Sandy Cheeks', image: 'images/sandycheeks.png', main: true, incleg: false, af: true},
+	 {id: 'sannytess', name: '"Sanny" and "Tess"', image: 'images/sannytess.png', main: true, incleg: false, af: false},
+	 {id: 'sans', name: 'sans undertale', image: 'images/sans.png', main: true, incleg: false, af: true},
+	 {id: 'saria', name: 'Saria', image: 'images/zzzzz-1745004931saria.png', main: true, incleg: false, af: false},
+	 {id: 'sayaka', name: 'Sayaka Miki', image: 'images/sayaka.png', main: true, incleg: false, af: false},
+	 {id: 'sayla', name: 'Sayla Mass', image: 'images/sayla.png', main: false, incleg: true, af: false},
+	 {id: 'sayori', name: 'Sayori', image: 'images/sayori.png', main: true, incleg: false, af: false},
+	 {id: 'scarlet_witch', name: 'Wanda Maximoff', image: 'images/scarletwitch.png', main: false, incleg: true, af: false},
+	 {id: 'schezo', name: 'Schezo Wegey', image: 'images/zzzzz-1759628734schezo.png', main: true, incleg: false, af: false},
+	 {id: 'scm', name: 'Suction Cup Man', image: 'images/suctioncupman.png', main: true, incleg: false, af: true},
+	 {id: 'sei', name: 'Sei Asagiri', image: 'images/sei.png', main: true, incleg: false, af: false},
+	 {id: 'selphy', name: 'Selphius Josephine', image: 'images/zzzzz-1757271738selphy.png', main: false, incleg: false, af: false},
+	 {id: 'senko', name: 'Senko the Helpful Fox', image: 'images/senko.png', main: true, incleg: false, af: false},
+	 {id: 'serena', name: 'Serena', image: 'images/zzzzz-1753242309serena.png', main: true, incleg: false, af: false},
+	 {id: 'seven', name: 'Seven of Nine', image: 'images/seven.png', main: false, incleg: true, af: false},
+	 {id: 'sex_toilet', name: 'Tony the Toilet Buddy', image: 'images/sextoilet.png', main: true, incleg: false, af: true},
+	 {id: 'shaggy', name: 'Norville Rogers', image: 'images/shaggy.png', main: false, incleg: true, af: false},
+	 {id: 'shamiko', name: 'Yuko Yoshida', image: 'images/zzzzz-1750734839shamiko.png', main: true, incleg: false, af: false},
+	 {id: 'shamir', name: 'Shamir Nevrand', image: 'images/shamir.png', main: false, incleg: true, af: false},
+	 {id: 'shantae', name: 'Shantae', image: 'images/shantae.png', main: true, incleg: false, af: false},
+	 {id: 'sharla', name: 'Sharla', image: 'images/sharla.png', main: false, incleg: true, af: false},
+	 {id: 'shazza', name: 'Shazza', image: 'images/shazza.png', main: false, incleg: true, af: false},
+	 {id: 'sheena', name: 'Sheena Fujibayashi', image: 'images/sheena.png', main: true, incleg: false, af: false},
+	 {id: 'shego', name: 'Shego', image: 'images/shego.png', main: false, incleg: true, af: false},
+	 {id: 'sheva', name: 'Sheva Alomar', image: 'images/sheva.png', main: false, incleg: true, af: false},
+	 {id: 'shimakaze', name: 'Shimakaze', image: 'images/shimakaze.png', main: true, incleg: false, af: false},
+	 {id: 'shoue_tucker', name: 'Shou Tucker', image: 'images/shoutucker.png', main: true, incleg: false, af: true},
+	 {id: 'simon', name: 'Simon Jiha', image: 'images/zzzzz-1753242309simon.png', main: false, incleg: false, af: false},
+	 {id: 'siren_sara', name: 'Siren Sara', image: 'images/zzzzz-1759628734sirensara.png', main: false, incleg: true, af: false},
+	 {id: 'sly_cooper', name: 'Sly Cooper', image: 'images/slycooper.png', main: true, incleg: false, af: false},
+	 {id: 'smug_wendy', name: 'Smug Wendy', image: 'images/zzzzz-1743536394smugwendy.png', main: true, incleg: false, af: true},
+	 {id: 'sofia', name: 'Sofia de Sainte-Coquille', image: 'images/sofia.png', main: true, incleg: false, af: false},
+	 {id: 'sola', name: 'Sola', image: 'images/sola.png', main: true, incleg: true, af: false},
+	 {id: 'solar_flare', name: 'Solar Flare', image: 'images/solarflare.png', main: true, incleg: false, af: false},
+	 {id: 'sonya', name: 'Sonya Blade', image: 'images/sonya.png', main: false, incleg: true, af: false},
+	 {id: 'spooky', name: 'Spooky', image: 'images/spooky.png', main: true, incleg: false, af: false},
+	 {id: 'starfire', name: 'Koriand\'r', image: 'images/starfire.png', main: true, incleg: false, af: false},
+	 {id: 'steve', name: 'Steve Harrington', image: 'images/steve.png', main: false, incleg: true, af: false},
+	 {id: 'stocking', name: 'Stocking Anarchy', image: 'images/stocking.png', main: true, incleg: false, af: false},
+	 {id: 'streaming-chan', name: 'Streaming-chan', image: 'images/streaming-chan.png', main: true, incleg: false, af: false},
+	 {id: 'sucrose', name: 'Sucrose the Harmless Sweetie', image: 'images/sucrose.png', main: true, incleg: false, af: false},
+	 {id: 'sunset_shimmer', name: 'Sunset Shimmer', image: 'images/zzzzz-1746290744sunsetshimmer.png', main: false, incleg: true, af: false},
+	 {id: 'supernova', name: 'Stella Lumina', image: 'images/supernova.png', main: true, incleg: false, af: false},
+	 {id: 'susie', name: 'Susie', image: 'images/susie.png', main: false, incleg: true, af: false},
+	 {id: 'suzuya', name: 'Suzuya', image: 'images/suzuya.png', main: false, incleg: true, af: false},
+	 {id: 'sweetheart', name: 'Sweetheart', image: 'images/sweetheart.png', main: true, incleg: false, af: false},
+	 {id: 'syrenne', name: 'Syrenne', image: 'images/syrenne.png', main: true, incleg: false, af: false},
+	 {id: 'tae', name: 'Tae Yamada', image: 'images/tae.png', main: true, incleg: false, af: true},
+	 {id: 'taiyaki_girl', name: 'Taiaki Girl', image: 'images/taiyakigirl.png', main: true, incleg: false, af: true},
+	 {id: 'takatoshi', name: 'Takatoshi Hijiyama', image: 'images/takatoshi.png', main: true, incleg: false, af: false},
+	 {id: 'tea_gardner', name: 'Téa Gardner', image: 'images/teagardner.png', main: true, incleg: false, af: false},
+	 {id: 'tharja', name: 'Tharja', image: 'images/tharja.png', main: true, incleg: false, af: false},
+	 {id: 'tick', name: 'Tick', image: 'images/tick.png', main: true, incleg: false, af: true},
+	 {id: 'tifa', name: 'Tifa Lockhart', image: 'images/zzzzz-1755406066tifa.png', main: false, incleg: false, af: false},
+	 {id: 'tina', name: 'Tina Armstrong', image: 'images/tina.png', main: false, incleg: true, af: false},
+	 {id: 'tomoko', name: 'Tomoko Kuroki', image: 'images/tomoko.png', main: true, incleg: false, af: false},
+	 {id: 'toph', name: 'Toph Beifong', image: 'images/toph.png', main: true, incleg: false, af: false},
+	 {id: 'toru_hakagure', name: 'Toru Hagakure', image: 'images/toruhagakure.png', main: true, incleg: false, af: true},
+	 {id: 'tracer', name: 'Tracer ', image: 'images/tracer.png', main: false, incleg: true, af: false},
+	 {id: 'trifle', name: 'Trifle', image: 'images/trifle.png', main: true, incleg: false, af: true},
+	 {id: 'tristana', name: 'Tristana', image: 'images/zzzzz-1759628734tristana.png', main: false, incleg: true, af: false},
+	 {id: 'trixie', name: 'Trixie', image: 'images/trixie.png', main: true, incleg: false, af: false},
+	 {id: 'turandot', name: 'Turandot', image: 'images/turandot.png', main: true, incleg: false, af: false},
+	 {id: 'twilight', name: 'Twilight Sparkle', image: 'images/twilight.png', main: true, incleg: false, af: false},
+	 {id: 'twisted_fate', name: 'Tobias Felix', image: 'images/twistedfate.png', main: true, incleg: false, af: false},
+	 {id: 'uhura', name: 'Nyota Uhura', image: 'images/uhura.png', main: false, incleg: true, af: false},
+	 {id: 'uravity', name: 'Ochako Uraraka', image: 'images/zzzzz-1735594400uravity.png', main: true, incleg: false, af: false},
+	 {id: 'vanessa', name: 'Vanessa', image: 'images/zzzzz-1725351397vanessa.png', main: true, incleg: false, af: false},
+	 {id: 'velma', name: 'Velma Dinkley', image: 'images/velma.png', main: true, incleg: false, af: false},
+	 {id: 'velvet', name: 'Velvet Crowe', image: 'images/zzzzz-1736975041velvet.png', main: true, incleg: false, af: false},
+	 {id: 'videl', name: 'Videl', image: 'images/videl.png', main: true, incleg: false, af: false},
+	 {id: 'vine_staff', name: 'Vine Staff', image: 'images/zzzzz-1757271738vinestaff.png', main: false, incleg: false, af: false},
+	 {id: 'vinyl', name: 'Vinyl', image: 'images/zzzzz-1746290744vinyl.png', main: true, incleg: false, af: false},
+	 {id: 'vriska', name: 'Vriska Serket', image: 'images/vriska.png', main: false, incleg: true, af: false},
+	 {id: 'wario', name: 'Wario', image: 'images/wario.png', main: true, incleg: false, af: true},
+	 {id: 'wasp', name: 'Janet van Dyne', image: 'images/wasp.png', main: true, incleg: false, af: false},
+	 {id: 'weiss_schnee', name: 'Weiss Schnee', image: 'images/weissschnee.png', main: true, incleg: false, af: false},
+	 {id: 'wiifitfemale', name: 'Wii Fit Trainer', image: 'images/zzzzz-1752182373wiifitfemale.png', main: true, incleg: false, af: false},
+	 {id: 'wikipe-tan', name: 'Wikipe-tan', image: 'images/wikipe-tan.png', main: true, incleg: false, af: false},
+	 {id: 'willow', name: 'Willow Rosenberg', image: 'images/willow.png', main: false, incleg: true, af: false},
+	 {id: 'winter', name: 'Winter Schnee', image: 'images/winter.png', main: false, incleg: true, af: false},
+	 {id: 'witch_puyopuyo', name: 'Witch', image: 'images/zzzzz-1746909965witchpuyopuyo.png', main: false, incleg: false, af: false},
+	 {id: 'wiz', name: 'Wiz', image: 'images/zzzzz-1727731274wiz.png', main: false, incleg: false, af: false},
+	 {id: 'wonder_woman', name: 'Diana Prince', image: 'images/wonderwoman.png', main: false, incleg: true, af: false},
+	 {id: 'yae', name: 'Yae', image: 'images/yae.png', main: true, incleg: false, af: false},
+	 {id: 'yae_miko', name: 'Yae Miko', image: 'images/yaemiko.png', main: true, incleg: false, af: false},
+	 {id: 'yang_xiao_long', name: 'Yang Xiao Long', image: 'images/yangxiaolong.png', main: false, incleg: true, af: false},
+	 {id: 'yshtola', name: 'Y\'shtola Rhul', image: 'images/yshtola.png', main: true, incleg: false, af: false},
+	 {id: 'yuelia', name: 'Yuelia', image: 'images/yuelia.png', main: true, incleg: false, af: false},
+	 {id: 'yukari', name: 'Yukari Yakumo', image: 'images/yukari.png', main: true, incleg: false, af: true},
+	 {id: 'yumeko', name: 'Yumeko Jabami', image: 'images/yumeko.png', main: true, incleg: false, af: false},
+	 {id: 'yuna', name: 'Yuna Toomi', image: 'images/yuna.png', main: false, incleg: true, af: false},
+	 {id: 'yuna_ffx', name: 'Yuna', image: 'images/yunaffx.png', main: false, incleg: true, af: false},
+	 {id: 'yuno_uno', name: 'Yuno Katsugo', image: 'images/yunouno.png', main: true, incleg: false, af: false},
+	 {id: 'yunyun', name: 'Yunyun of the Crimson Demons', image: 'images/yunyun.png', main: true, incleg: false, af: false},
+	 {id: 'yuri', name: 'Yuri', image: 'images/yuri.png', main: true, incleg: false, af: false},
+	 {id: 'yusei_fudo', name: 'Yusei Fudo', image: 'images/zzzzz-1722963352yuseifudo.png', main: true, incleg: false, af: false},
+	 {id: 'yusuke', name: 'Yusuke Kitagawa', image: 'images/yusuke.png', main: true, incleg: false, af: false},
+	 {id: 'yuzuki', name: 'Yuzuki Yasuda', image: 'images/zzzzz-1730317902yuzuki.png', main: true, incleg: false, af: false},
+	 {id: 'zeke_pandoria', name: 'Zeke and Pandoria', image: 'images/zekepandoria.png', main: true, incleg: false, af: false},
+	 {id: 'zelda', name: 'Princess Zelda', image: 'images/zelda.png', main: false, incleg: true, af: false},
+	 {id: 'zenobia', name: 'Zenobia', image: 'images/zenobia.png', main: true, incleg: false, af: true},
+	 {id: 'zizou', name: 'Zizou Olympia', image: 'images/zizou.png', main: false, incleg: true, af: false},
+	 {id: 'zoe', name: 'Zoe', image: 'images/zoe.png', main: true, incleg: false, af: false},
+	 {id: 'zoey', name: 'Zoey', image: 'images/zoey.png', main: false, incleg: true, af: false},
+	 {id: 'zone_tan', name: 'Zone-tan', image: 'images/zone-tan.png', main: true, incleg: false, af: false}
+]
+var myPicker = new picker.Picker({
+    items: items,
+    localStorageKey: 'picker-state',
+	defaultSettings: {
+        minBatchSize: 2,
+        maxBatchSize: 16,
+        includeMain: true,
+        includeLegacy: true,
+        includeTesting: true,
+        includeIncomplete: false,
+        includeAprilFools: false,
+    },
+    shouldIncludeItem: function (item, settings) {
+        return (settings.includeMain && item.main && !item.incleg && !item.af) || (settings.includeTesting && !item.main && !item.incleg) || (settings.includeLegacy && item.main && item.incleg) || (settings.includeIncomplete && !item.main && item.incleg) || (settings.includeAprilFools && item.af);
+    }
+});
+
+var pickerUI = new PickerUI(myPicker, {
+    elements: {
+        pick: "#pick",
+        pass: "#pass",
+        undo: "#undo",
+        redo: "#redo",
+        evaluating: "#evaluating",
+        favorites: "#favorites",
+        settings: {
+            maxBatchSize: '#max-batch-size',
+            includeMain: '#includeMain',
+            includeLegacy: '#includeLegacy',
+            includeTesting: '#includeTesting',
+            includeIncomplete: '#includeIncomplete',
+            includeAprilFools: '#includeAprilFools',
+
+        }
+    }
+});
+
+pickerUI.initialize();
+
+/* Sortable favorites - you can safely remove this, and the Sortable.min.js script, if you don't want to be able to sort your favorite list. */
+var sortable = new Sortable(pickerUI.elem.favorites.get(0), {
+    draggable: '.item',
+    animation: 100,
+    onStart: function() {
+        pickerUI.elem.favorites.addClass("sorting");
+    },
+    onEnd: function() {
+        pickerUI.elem.favorites.removeClass("sorting");
+    },
+    onUpdate: function() {
+        myPicker.setFavorites(pickerUI.elem.favorites.children().map(function() {
+            return pickerUI.getItem(this);
+        }).get());
+        pickerUI.update(true);
+    }
+});
+/* End sortable favorites */
+</script>
+
+
+</div>
+</body>
+</html>
